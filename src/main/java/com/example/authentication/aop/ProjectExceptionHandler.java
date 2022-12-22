@@ -13,10 +13,16 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.DisabledException;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @ControllerAdvice
 public class ProjectExceptionHandler {
@@ -50,10 +56,13 @@ public class ProjectExceptionHandler {
     @ExceptionHandler(value = MethodArgumentNotValidException.class)
     protected ResponseEntity<APIResponseError> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
         log.error(e.getMessage(), e);
+        List<String> msgList = new ArrayList<>();
+        e.getBindingResult().getAllErrors().forEach((error) -> msgList.add(error.getDefaultMessage()));
+
         APIResponseError apiResponseError = APIResponseError.builder()
                 .code(HttpStatus.BAD_REQUEST.value())
                 .error(HttpStatus.BAD_REQUEST.name())
-                .message(e.getMessage())
+                .message(msgList.toString().replace("[", Constants.EMPTY).replace("]", Constants.EMPTY))
                 .build();
 
         return new ResponseEntity<>(apiResponseError, HttpStatus.BAD_REQUEST);
